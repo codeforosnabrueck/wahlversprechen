@@ -13,10 +13,10 @@ import models._
 object CorsFilter extends Filter {
   def apply(nextFilter: (RequestHeader) => Future[SimpleResult])
            (requestHeader: RequestHeader): Future[SimpleResult] = {
-  
+
     val result = nextFilter(requestHeader)
     requestHeader.path.startsWith("/json") match {
-      case true => result.map( _.withHeaders( 
+      case true => result.map( _.withHeaders(
         "Access-Control-Allow-Origin" -> "*",
         "Access-Control-Allow-Methods" -> "POST, GET, OPTIONS, PUT, DELETE",
         "Access-Control-Allow-Headers" -> "x-requested-with,content-type,Cache-Control,Pragma,Date"
@@ -33,27 +33,6 @@ object Global extends WithFilters(new GzipFilter, CorsFilter) with GlobalSetting
     play.api.Play.mode(app) match {
       case play.api.Mode.Test => // do not schedule anything for Test
       case _ => {
-        Logger.info("Scheduling the feed parser daemon")
-        
-        scheduler.scheduleAtFixedRate( 
-          new Runnable {
-            def run() {
-              Logger.info("Started FeedDaemon.update()")
-              try {
-                controllers.FeedDaemon.update()  
-              } catch {
-                case e: InterruptedException => 
-                  Logger.info("Interrupted FeedDaemon.update()")
-                case e: Exception =>
-                  Logger.error("Unknown Exception in FeedDaemon.update()")
-                  e.printStackTrace()
-                  throw e
-              } finally {
-                Logger.info("Finished FeedDaemon.update()")
-              }             
-            }
-          }, 0, 2, TimeUnit.HOURS
-        )
 
         InitialData.insert(app)
       }
@@ -71,10 +50,10 @@ object Global extends WithFilters(new GzipFilter, CorsFilter) with GlobalSetting
         Logger.error("ScheduledThreadPoolExecutor didn't terminate before timeout")
       }
     } catch {
-      case e: Exception => 
+      case e: Exception =>
         Logger.error("scheduler.awaitTermination was interrupted")
         e.printStackTrace
-    }    
+    }
   }
 }
 
@@ -84,7 +63,7 @@ object InitialData {
 
   def insert(implicit app: Application) = {
     if (User.findAll.isEmpty) {
-      // TODO: Replace these default values with useful configuration options or 
+      // TODO: Replace these default values with useful configuration options or
       // a setup page
       var ausers = new collection.mutable.ArrayBuffer[User];
       Array(
